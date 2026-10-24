@@ -1,0 +1,16 @@
+﻿bin/
+obj/
+.vs/
+*.user
+node_modules/
+.DS_Store
+*.rvt
+inputData.json
+dist/
+tests/e2e/node_modules/
+artifacts/
+
+# local secrets: never commit
+.env
+.env.*
+!.env.example

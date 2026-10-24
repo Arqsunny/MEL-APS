@@ -1,0 +1,118 @@
+﻿using System;
+using System.IO;
+using System.Collections.Generic;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.ApplicationServices;
+using DesignAutomationFramework;
+using Newtonsoft.Json;
+
+namespace MasterEquipmentSync.Headless
+{
+    [Autodesk.Revit.Attributes.Regeneration(Autodesk.Revit.Attributes.RegenerationOption.Manual)]
+    [Autodesk.Revit.Attributes.Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
+    public class MelSyncApp : IExternalDBApplication
+    {
+        public ExternalDBApplicationResult OnStartup(ControlledApplication application)
+        {
+            DesignAutomationBridge.DesignAutomationReadyEvent += HandleSyncExecution;
+            return ExternalDBApplicationResult.Succeeded;
+        }
+
+        public ExternalDBApplicationResult OnShutdown(ControlledApplication application)
+        {
+            return ExternalDBApplicationResult.Succeeded;
+        }
+
+        private void HandleSyncExecution(object sender, DesignAutomationReadyEventArgs e)
+        {
+            e.Succeeded = false;
+            DesignAutomationData data = e.DesignAutomationData;
+            Document doc = data.RevitDoc;
+            if (doc == null) return;
+
+            string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "inputData.json");
+            if (!File.Exists(jsonPath))
+            {
+                e.Succeeded = true;
+                return;
+            }
+
+            var deltas = JsonConvert.DeserializeObject<List<EquipmentDeltaPayload>>(File.ReadAllText(jsonPath));
+
+            using (Transaction tx = new Transaction(doc, "Batch Commit MEL Parameters"))
+            {
+                tx.Start();
+                FailureHandlingOptions failOpt = tx.GetFailureHandlingOptions();
+                failOpt.SetFailuresPreprocessor(new HeadlessWarningSwallower());
+                tx.SetFailureHandlingOptions(failOpt);
+
+                foreach (var delta in deltas)
+                {
+                    Element element = doc.GetElement(delta.UniqueId);
+                    if (element == null) continue;
+
+                    foreach (var entry in delta.Parameters)
+                    {
+                        if (!Guid.TryParse(entry.Key, out Guid paramGuid)) continue;
+
+                        Parameter param = element.get_Parameter(paramGuid);
+                        if (param == null || param.IsReadOnly) continue;
+
+                        AssignValue(param, entry.Value);
+                    }
+                }
+                tx.Commit();
+            }
+
+            if (doc.IsWorkshared)
+            {
+                var syncOptions = new SynchronizeWithCentralOptions();
+                syncOptions.SetRelinquishOptions(new RelinquishOptions(true));
+                syncOptions.SaveLocalAfter = false;
+                syncOptions.Comment = "Automated Instance Sync via APS Master Equipment Engine";
+                WorksharingUtils.SynchronizeWithCentral(doc, new TransactWithCentralOptions(), syncOptions);
+            }
+            else
+            {
+                doc.Save();
+            }
+
+            e.Succeeded = true;
+        }
+
+        private void AssignValue(Parameter param, string val)
+        {
+            switch (param.StorageType)
+            {
+                case StorageType.String:
+                    param.Set(val ?? string.Empty);
+                    break;
+                case StorageType.Integer:
+                    if (int.TryParse(val, out int iVal)) param.Set(iVal);
+                    break;
+                case StorageType.Double:
+                    if (double.TryParse(val, out double dVal)) param.Set(dVal);
+                    break;
+            }
+        }
+    }
+
+    public class HeadlessWarningSwallower : IFailuresPreprocessor
+    {
+        public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
+        {
+            foreach (var failure in failuresAccessor.GetFailureMessages())
+            {
+                if (failure.GetSeverity() == FailureSeverity.Warning)
+                    failuresAccessor.DeleteWarning(failure);
+            }
+            return FailureProcessingResult.Continue;
+        }
+    }
+
+    public class EquipmentDeltaPayload
+    {
+        public string UniqueId { get; set; } = string.Empty;
+        public Dictionary<string, string> Parameters { get; set; } = new();
+    }
+}

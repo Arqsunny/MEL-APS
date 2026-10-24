@@ -1,0 +1,6 @@
+{
+  "name": "mel-e2e",
+  "private": true,
+  "scripts": { "ui": "node ui_workflow.cjs" },
+  "dependencies": { "playwright-core": "^1.49.0" }
+}

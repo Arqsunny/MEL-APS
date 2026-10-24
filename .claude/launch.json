@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "mel-backend", "runtimeExecutable": "dotnet", "runtimeArgs": ["run", "--project", "backend", "--urls", "http://localhost:5080"], "port": 5080 }
+  ]
+}

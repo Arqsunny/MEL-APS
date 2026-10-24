@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure logic + wire contracts shared by the Revit bundle and the backend. No Revit references, so it is unit-testable. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MelSync</RootNamespace>
+  </PropertyGroup>
+</Project>

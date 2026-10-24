@@ -1,0 +1,24 @@
+name: mel-aps
+# Local development database. The password comes from .env.dev (git-ignored), created by tools/init-dev-secrets.ps1:
+#   docker compose --env-file .env.dev up -d
+# Production uses ConnectionStrings__Mel from the environment / a secret store.
+services:
+  postgres:
+    image: postgres:16
+    container_name: mel-aps-postgres
+    environment:
+      POSTGRES_DB: mel
+      POSTGRES_USER: mel
+      POSTGRES_PASSWORD: "${MEL_DB_PASSWORD:?Run tools/init-dev-secrets.ps1 first and start with --env-file .env.dev}"
+    ports:
+      - "5433:5432"
+    volumes:
+      - mel-aps-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mel -d mel"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mel-aps-pgdata:
