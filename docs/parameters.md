@@ -1,6 +1,6 @@
 # MEL Shared-Parameter Catalog (v1 draft)
 
-**Source of truth:** [`mel-parameters.json`](mel-parameters.json). Everything else derives from it:
+**Source of truth for the MEP set:** [`MASTER_MEP_SHARED_PARAMETER_FILE.txt`](MASTER_MEP_SHARED_PARAMETER_FILE.txt), imported by `python tools/import_shared_params.py` into [`mel-parameters.json`](mel-parameters.json). The 11 `MEL_*` rows below are app-owned and are kept across imports. Everything else derives from the JSON:
 - `MEL_SharedParameters.txt` (Revit file): `python tools/gen_shared_params.py`
 - Backend validation and `GET /api/parameters`: `backend/Models/ParameterCatalog.cs`
 - UI labels in `frontend/index.html` (manual for now)

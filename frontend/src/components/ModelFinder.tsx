@@ -49,7 +49,7 @@ export default function ModelFinder({ onClose, onLinked, notify }: Props) {
   }
 
   async function link(m: CloudModel) {
-    const r = await guard(() => api.linkModel(region, m.projectGuid, m.modelGuid, m.revitVersion));
+    const r = await guard(() => api.linkModel(region, m.projectGuid, m.modelGuid, m.revitVersion, { hubId, projectId, itemId: m.itemId }));
     if (r) { setLinked(r); notify(`Linked to ${m.name}.`); await onLinked(); }
   }
 

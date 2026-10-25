@@ -78,14 +78,39 @@
         .viewer-container {
             grid-column: 1 / 2;
             grid-row: 1 / 2;
-            background: radial-gradient(circle at center, #1e2536 0%, #0f121a 100%);
+            background: #0f121a;
             position: relative;
+            display: flex;
             border-right: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
+            min-width: 0;
         }
+        .viewer-stage { position: relative; flex: 1; min-width: 0; }
+        .aps-viewer { position: absolute; inset: 0; }
+        .project-browser {
+            width: 280px; flex: none; display: flex; flex-direction: column; min-height: 0;
+            background: var(--bg-panel); border-right: 1px solid var(--border-color); z-index: 3;
+        }
+        .project-browser.collapsed { width: 36px; }
+        .project-browser.collapsed .browser-tree,
+        .project-browser.collapsed .browser-title { display: none; }
+        .browser-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 8px; border-bottom: 1px solid var(--border-color); flex: none;
+        }
+        .browser-title { font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-muted); }
+        .browser-tree { overflow: auto; flex: 1; padding: 6px 4px 12px; }
+        .browser-children { margin-left: 12px; }
+        .browser-row {
+            display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+            background: transparent; border: none; color: var(--text-primary); cursor: pointer;
+            padding: 3px 6px; border-radius: 4px; font-size: 12px;
+        }
+        .browser-row:hover { background: var(--bg-input); }
+        .browser-row.active { background: rgba(6, 150, 215, 0.22); }
+        .browser-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .browser-error { color: #fca5a5; font-size: 11px; padding: 2px 8px; }
         .viewport-mock { width: 100%; height: 100%; position: relative; overflow: hidden; user-select: none; }
         .grid-lines {
             position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
@@ -115,7 +140,7 @@
             color: #fff; transform: scale(1.05);
         }
         .mock-equipment.pending { border: 1px dashed var(--accent-amber); }
-        .viewer-hud-top { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; }
+        .viewer-hud-top { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; z-index: 2; max-width: calc(100% - 28px); flex-wrap: wrap; }
         .hud-chip {
             background: rgba(22, 25, 34, 0.85); backdrop-filter: blur(8px);
             border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 20px;

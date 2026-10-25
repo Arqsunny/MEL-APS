@@ -6,7 +6,7 @@ public record ParameterDefinition(
     string Name, string Category, string DataType, string? SiUnit,
     Guid Guid, string Description, bool UserModifiable, bool Stageable);
 
-// Single source of truth: docs/mel-parameters.json (also generates the Revit shared parameter file).
+// Loaded from docs/mel-parameters.json. The MEP rows are imported from the shared-parameter TXT.
 public static class ParameterCatalog
 {
     private static readonly Lazy<IReadOnlyList<ParameterDefinition>> _all = new(Load);

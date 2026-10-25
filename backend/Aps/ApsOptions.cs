@@ -51,7 +51,7 @@ public class ApsOptions
     // Scopes. Revit cloud models need a user context (3-legged) with code:all.
     public const string ScopeDesignAutomation = "code:all";
     public const string ScopeOss = "data:read data:write data:create bucket:create bucket:read";
-    public const string ScopeUser = "code:all data:read data:write data:create user-profile:read";
+    public const string ScopeUser = "code:all data:read data:write data:create viewables:read user-profile:read";
 }
 
 public class ApsException : Exception

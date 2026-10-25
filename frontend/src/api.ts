@@ -1,4 +1,4 @@
-import type { ApsStatus, AuthConfig, CurrentUser, EquipmentItem, Hub, LinkedModel, ModelScanResult, ParameterDefinition, Project, StagedRecord, SyncJobSummary } from './types';
+import type { ApsStatus, AuthConfig, CurrentUser, EquipmentItem, FolderEntry, Hub, ItemVersion, LinkedModel, ModelScanResult, ParameterDefinition, Project, StagedRecord, SyncJobSummary, ViewerPick, ViewerSession } from './types';
 
 export const MODEL_GUID = 'demo-model';
 
@@ -42,12 +42,27 @@ export const api = {
   syncJobs: () => call<SyncJobSummary[]>(`/api/sync/jobs/${MODEL_GUID}?limit=5`),
   apsStatus: () => call<ApsStatus>('/api/aps/status'),
   models: () => call<LinkedModel[]>('/api/models'),
+  viewerSession: () => call<ViewerSession>('/api/models/' + MODEL_GUID + '/viewer'),
+  ensureEquipment: (pick: ViewerPick) =>
+    call<EquipmentItem>('/api/equipment/' + MODEL_GUID + '/from-viewer', { method: 'PUT', body: JSON.stringify(pick) }),
   hubs: () => call<Hub[]>('/api/aps/browse/hubs'),
   projects: (hubId: string) => call<Project[]>(`/api/aps/browse/hubs/${encodeURIComponent(hubId)}/projects`),
+  contents: (hubId: string, projectId: string, folderId?: string) =>
+    call<FolderEntry[]>(`/api/aps/browse/hubs/${encodeURIComponent(hubId)}/projects/${encodeURIComponent(projectId)}/contents${folderId ? `?folderId=${encodeURIComponent(folderId)}` : ''}`),
+  versions: (hubId: string, projectId: string, itemId: string) =>
+    call<ItemVersion[]>(`/api/aps/browse/hubs/${encodeURIComponent(hubId)}/projects/${encodeURIComponent(projectId)}/versions?itemId=${encodeURIComponent(itemId)}`),
+  itemTip: (hubId: string, projectId: string, itemId: string) =>
+    call<ItemVersion>(`/api/aps/browse/hubs/${encodeURIComponent(hubId)}/projects/${encodeURIComponent(projectId)}/tip?itemId=${encodeURIComponent(itemId)}`),
   findModels: (hubId: string, projectId: string, search: string) =>
     call<ModelScanResult>(`/api/aps/browse/hubs/${encodeURIComponent(hubId)}/projects/${encodeURIComponent(projectId)}/models?search=${encodeURIComponent(search)}`),
-  linkModel: (region: string, projectGuid: string, modelGuid: string, revitVersion: number | null) =>
-    call<LinkedModel>(`/api/models/${MODEL_GUID}/cloud-link`, { method: 'PUT', body: JSON.stringify({ region, projectGuid, modelGuid, revitVersion }) }),
+  linkModel: (region: string, projectGuid: string, modelGuid: string, revitVersion: number | null, acc?: { hubId: string; projectId: string; itemId: string }) =>
+    call<LinkedModel>(`/api/models/${MODEL_GUID}/cloud-link`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        region, projectGuid, modelGuid, revitVersion,
+        accHubId: acc?.hubId, accProjectId: acc?.projectId, accItemId: acc?.itemId,
+      }),
+    }),
   apsConnect: () => call<{ url: string }>('/api/aps/connect', { method: 'POST' }),
   dispatch: (equipmentUniqueIds: string[]) =>
     call<{ jobId: string; itemsQueued: number }>('/api/EquipmentSync/dispatch-revit-sync', {

@@ -55,6 +55,30 @@ public class ApsBrowseController : ControllerBase
     [HttpGet("hubs/{hubId}/projects")]
     public Task<IActionResult> Projects(string hubId, CancellationToken ct) => GuardAsync(async () => Ok(await _dm.GetProjectsAsync(hubId, ct)), ct);
 
+    /// <summary>One folder level, same shape as the APS hubs browser. Omit folderId for the project's top folders.</summary>
+    [HttpGet("hubs/{hubId}/projects/{projectId}/contents")]
+    public Task<IActionResult> Contents(string hubId, string projectId, [FromQuery] string? folderId, CancellationToken ct) =>
+        GuardAsync(async () => Ok(await _dm.GetContentsAsync(hubId, projectId, folderId, ct)), ct);
+
+    /// <summary>Versions of one file. Clicking one opens it in the viewer.</summary>
+    [HttpGet("hubs/{hubId}/projects/{projectId}/versions")]
+    public Task<IActionResult> Versions(string hubId, string projectId, [FromQuery] string itemId, CancellationToken ct) =>
+        GuardAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(itemId)) return BadRequest(new { error = "itemId is required." });
+            return Ok(await _dm.GetVersionsAsync(projectId, itemId, ct));
+        }, ct);
+
+    /// <summary>Latest version of a file, so choosing the file itself opens it without listing every version.</summary>
+    [HttpGet("hubs/{hubId}/projects/{projectId}/tip")]
+    public Task<IActionResult> Tip(string hubId, string projectId, [FromQuery] string itemId, CancellationToken ct) =>
+        GuardAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(itemId)) return BadRequest(new { error = "itemId is required." });
+            var tip = await _dm.GetTipAsync(projectId, itemId, ct) ?? throw new ApsException("This file has no version the viewer can open.");
+            return Ok(new { id = tip.VersionId, name = tip.Name });
+        }, ct);
+
     /// <summary>Scans a project for Revit cloud models (bounded; see `scan.truncated`). `search` filters by file name.</summary>
     [HttpGet("hubs/{hubId}/projects/{projectId}/models")]
     public Task<IActionResult> Models(string hubId, string projectId, [FromQuery] string? search, CancellationToken ct) => GuardAsync(async () =>

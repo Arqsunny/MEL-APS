@@ -17,16 +17,24 @@ interface Props {
 }
 
 const SECTIONS = ['Engineering', 'Procurement'];
+const RESULT_LIMIT = 40;
 
 export default function Inspector({ item, params, units, staged, canStage, status, onChanged, notify }: Props) {
-  const editable = params.filter(p => p.stageable && SECTIONS.includes(p.category));
-  const initial = () => Object.fromEntries(editable.map(p => [p.guid, toDisplay(p, item.values[p.guid], units)]));
-  const [form, setForm] = useState<Record<string, string>>(initial);
+  const [query, setQuery] = useState('');
+  const [form, setForm] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  const q = query.trim().toLowerCase();
+  const matches = params.filter(p => p.stageable && (q
+    ? `${p.name} ${p.category}`.toLowerCase().includes(q)
+    : SECTIONS.includes(p.category)));
+  const hidden = q ? Math.max(0, matches.length - RESULT_LIMIT) : 0;
+  const editable = hidden ? matches.slice(0, RESULT_LIMIT) : matches;
+  const sections = q ? [...new Set(editable.map(p => p.category))] : SECTIONS;
 
   // Dirty = differs from what the user was shown (avoids false changes from unit round-tripping).
   const shown = (p: ParameterDefinition) => toDisplay(p, item.values[p.guid], units);
-  const changed = editable.filter(p => (form[p.guid] ?? '') !== shown(p));
+  const changed = params.filter(p => p.stageable && form[p.guid] !== undefined && form[p.guid] !== shown(p));
 
   async function stage() {
     setBusy(true);
@@ -35,10 +43,11 @@ export default function Inspector({ item, params, units, staged, canStage, statu
         await api.stage({
           equipmentUniqueId: item.uniqueId,
           parameterGuid: p.guid,
-          proposedValue: toSi(p, form[p.guid], units),
+          proposedValue: toSi(p, form[p.guid] ?? '', units),
         });
       }
       notify(`${changed.length} change(s) staged; awaiting BIM Lead approval.`);
+      setForm({});
       await onChanged();
     } catch (err) {
       notify((err as Error).message, true);
@@ -69,11 +78,23 @@ export default function Inspector({ item, params, units, staged, canStage, statu
             <i className="ph-bold ph-pencil-simple-line" />
           </div>
         )}
-        {SECTIONS.map(section => (
+        <input type="text" placeholder="Search shared parameters..." value={query}
+               onChange={e => setQuery(e.target.value)}
+               style={{ padding: '6px 8px', fontSize: 12 }} />
+        {q && hidden > 0 && (
+          <div className="hint">Showing {RESULT_LIMIT} of {matches.length}. Narrow the search.</div>
+        )}
+        {q && matches.length === 0 && (
+          <div className="hint">No stageable parameter matches that search.</div>
+        )}
+        {sections.map(section => {
+          const fields = editable.filter(p => p.category === section);
+          if (fields.length === 0) return null;
+          return (
           <div className="panel-section" key={section}>
             <div className="section-title"><span>{section}</span></div>
             <div className="prop-card">
-              {editable.filter(p => p.category === section).map(p => {
+              {fields.map(p => {
                 const unit = displayUnit(p, units);
                 return (
                   <div className="prop-item" key={p.guid}>
@@ -82,7 +103,7 @@ export default function Inspector({ item, params, units, staged, canStage, statu
                       <span className="guid-tag">{`{${p.guid.slice(0, 8)}…}`}</span>
                     </label>
                     <div className="input-group">
-                      <input type={p.dataType === 'TEXT' ? 'text' : 'number'} value={form[p.guid] ?? ''}
+                      <input type={p.dataType === 'TEXT' ? 'text' : 'number'} value={form[p.guid] ?? shown(p)}
                              onChange={e => setForm({ ...form, [p.guid]: e.target.value })} />
                       {unit && <span className="unit-indicator">{unit}</span>}
                     </div>
@@ -91,7 +112,8 @@ export default function Inspector({ item, params, units, staged, canStage, statu
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
         {staged.length > 0 && (
           <div className="panel-section">
             <div className="section-title"><span>History (this item)</span></div>
@@ -110,7 +132,7 @@ export default function Inspector({ item, params, units, staged, canStage, statu
       </div>
       <div className="inspector-footer">
         <button className="btn btn-secondary" style={{ flex: 1 }} disabled={busy || changed.length === 0}
-                onClick={() => setForm(initial())}>Revert</button>
+                onClick={() => setForm({})}>Revert</button>
         <button className="btn btn-primary" style={{ flex: 2 }} disabled={busy || !canStage || changed.length === 0}
                 title={canStage ? undefined : 'Your account has no Contributor or BIM Lead role'}
                 onClick={() => void stage()}>Stage Changes{changed.length ? ` (${changed.length})` : ''}</button>

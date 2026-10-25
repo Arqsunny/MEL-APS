@@ -38,6 +38,7 @@ builder.Services.AddDataProtection();   // protects the stored APS refresh token
 builder.Services.AddSingleton<ApsAuth>();
 builder.Services.AddSingleton<OssClient>();
 builder.Services.AddSingleton<DataManagementClient>();
+builder.Services.AddSingleton<ViewerSessionService>();
 builder.Services.AddSingleton<DesignAutomationClient>();
 builder.Services.AddSingleton<ApsSetupService>();
 if (aps.IsLive) builder.Services.AddSingleton<ISyncRunner, DesignAutomationSyncRunner>();

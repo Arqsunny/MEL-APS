@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, getToken, setToken, setUnauthorizedHandler } from './api';
-import type { ApsStatus, CurrentUser, EquipmentItem, ParameterDefinition, StagedRecord, SyncJobSummary, UnitSystem } from './types';
+import type { ApsStatus, CurrentUser, EquipmentItem, ParameterDefinition, StagedRecord, SyncJobSummary, UnitSystem, ViewerPick } from './types';
 import Header from './components/Header';
 import Login from './components/Login';
 import ViewerPane from './components/ViewerPane';
@@ -100,6 +100,13 @@ export default function App() {
     try { window.location.href = (await api.apsConnect()).url; } catch (err) { notify((err as Error).message, true); }
   }
 
+  async function onViewerPick(pick: ViewerPick) {
+    const item = await api.ensureEquipment(pick);
+    setSelected(item.uniqueId);
+    await refresh();
+    setSelected(item.uniqueId);
+  }
+
   const statusByEquipment = useMemo(() => {
     const m: Record<string, EquipmentStatus> = {};
     for (const e of equipment) {
@@ -138,7 +145,9 @@ export default function App() {
               pendingCount={pendingCount} onReview={() => setReviewOpen(true)}
               aps={aps} canReview={canReview} onConnectAps={() => void connectAps()} onFindModel={() => setFinderOpen(true)} syncing={syncing} />
       <div className="workspace">
-        <ViewerPane equipment={equipment} selected={selected} status={statusByEquipment} onSelect={setSelected} />
+        <ViewerPane params={params} selected={selected} canBrowse={canReview}
+                    live={aps?.mode === 'Live' && !!aps.connected} onSelect={setSelected}
+                    onPick={onViewerPick} onConnect={() => void connectAps()} />
         <EquipmentGrid equipment={equipment} params={params} units={units} selected={selected}
                        status={statusByEquipment} onSelect={setSelected} />
         {current && (

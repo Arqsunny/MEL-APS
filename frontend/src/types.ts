@@ -56,6 +56,8 @@ export interface ApsStatus { mode: string; connected: boolean; account: string |
 
 export interface Hub { id: string; name: string; region: string | null }
 export interface Project { id: string; name: string }
+export interface FolderEntry { id: string; name: string; folder: boolean }
+export interface ItemVersion { id: string; name: string }
 export interface CloudModel {
   itemId: string; name: string; folderPath: string; projectGuid: string; modelGuid: string;
   isComposite: boolean | null; lastModified: string | null;
@@ -69,6 +71,17 @@ export interface ModelScanResult {
   scan: { foldersVisited: number; revitFilesChecked: number; notCloudWorkshared: number; truncated: boolean; notes: string[] };
 }
 export interface LinkedModel { modelGuid: string; displayName: string; region: string | null; cloudProjectGuid: string | null; cloudModelGuid: string | null; revitVersion: number | null }
+
+export interface ViewerSession { documentUrn: string; accessToken: string; expiresIn: number; region: string; name: string }
+
+/** An element picked in the viewer. values are TEXT/INTEGER only, keyed by parameter GUID. */
+export interface ViewerPick {
+  uniqueId: string;
+  tag: string;
+  familyType: string;
+  equipmentGuid: string | null;
+  values: Record<string, string>;
+}
 
 export type Role = 'Contributor' | 'BimLead';
 

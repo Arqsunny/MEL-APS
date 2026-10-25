@@ -91,6 +91,9 @@ public class MelDbContext : DbContext
             e.Property(x => x.ModelGuid).HasMaxLength(100);
             e.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
             e.Property(x => x.Region).HasMaxLength(8);
+            e.Property(x => x.AccHubId).HasMaxLength(128);
+            e.Property(x => x.AccProjectId).HasMaxLength(128);
+            e.Property(x => x.AccItemId).HasMaxLength(256);
             e.Ignore(x => x.IsLinked);
         });
 

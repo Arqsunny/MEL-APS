@@ -103,6 +103,19 @@ public class ApsAuth
         finally { _userLock.Release(); }
     }
 
+    /// <summary>
+    /// Access token for the APS Viewer. This is the connected account's token (the viewable lives in that account's project).
+    /// The refresh token stays on the server. A connection made before viewables:read was requested must be reconnected.
+    /// </summary>
+    public async Task<(string AccessToken, int ExpiresIn)> GetViewerAccessAsync(CancellationToken ct)
+    {
+        var token = await GetServiceUserTokenAsync(ct);
+        var expiresIn = 300;
+        if (_userToken is { } cached && cached.Token == token)
+            expiresIn = Math.Max(60, (int)(cached.Expires - DateTime.UtcNow).TotalSeconds);
+        return (token, expiresIn);
+    }
+
     public async Task<ApsConnectionInfo?> GetConnectionAsync(CancellationToken ct)
     {
         using var scope = _scopes.CreateScope();

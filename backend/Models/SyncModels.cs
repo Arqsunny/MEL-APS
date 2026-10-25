@@ -50,6 +50,10 @@ public class RevitModel
     public string? CloudModelGuid { get; set; }
     /// <summary>Revit release the model was last saved in (e.g. 2025); decides which engine may open it. Null = unknown (sync blocked).</summary>
     public int? RevitVersion { get; set; }
+    /// <summary>ACC hub/project/item that publish the viewable. The cloud GUIDs above open the model in Revit; these open it in the viewer.</summary>
+    public string? AccHubId { get; set; }
+    public string? AccProjectId { get; set; }
+    public string? AccItemId { get; set; }
     public bool IsLinked => !string.IsNullOrEmpty(Region) && !string.IsNullOrEmpty(CloudProjectGuid) && !string.IsNullOrEmpty(CloudModelGuid);
 }
 
